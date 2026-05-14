@@ -42,16 +42,16 @@ jobs:
         ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
         REGION="${{ secrets.AWS_REGION }}"
         ECR_REGISTRY="$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com"
-        ECR_REPO_URL="$ECR_REGISTRY/tienda-frontend"
+        ECR_REPO_URL="$ECR_REGISTRY/despacho-frontend"
 
-        FRONTEND_EC2_ID=$(aws ec2 describe-instances \
-          --filters "Name=tag:Name,Values=tienda-frontend" "Name=instance-state-name,Values=running" \
+        EC2_ID=$(aws ec2 describe-instances \
+          --filters "Name=tag:Name,Values=despacho-frontend" "Name=instance-state-name,Values=running" \
           --query "Reservations[0].Instances[0].InstanceId" \
           --output text)
 
         echo "ecr_registry=$ECR_REGISTRY" >> $GITHUB_OUTPUT
         echo "ecr_repo_url=$ECR_REPO_URL" >> $GITHUB_OUTPUT
-        echo "frontend_ec2_id=$FRONTEND_EC2_ID" >> $GITHUB_OUTPUT
+        echo "ec2_id=$EC2_ID" >> $GITHUB_OUTPUT
 
     - name: Login en Amazon ECR
       uses: aws-actions/amazon-ecr-login@v1
@@ -59,8 +59,8 @@ jobs:
     - name: Build imagen Frontend y push a ECR
       run: |
         cd frontend
-        docker build -t tienda-frontend .
-        docker tag tienda-frontend:latest ${{ steps.aws-ids.outputs.ecr_repo_url }}:latest
+        docker build -t despacho-frontend .
+        docker tag despacho-frontend:latest ${{ steps.aws-ids.outputs.ecr_repo_url }}:latest
         docker push ${{ steps.aws-ids.outputs.ecr_repo_url }}:latest
 
     - name: Pausa de estabilización SSM
@@ -71,19 +71,19 @@ jobs:
         ECR_REGISTRY="${{ steps.aws-ids.outputs.ecr_registry }}"
         ECR_REPO_URL="${{ steps.aws-ids.outputs.ecr_repo_url }}"
         REGION="${{ secrets.AWS_REGION }}"
-        INSTANCE_ID="${{ steps.aws-ids.outputs.frontend_ec2_id }}"
+        INSTANCE_ID="${{ steps.aws-ids.outputs.ec2_id }}"
 
         aws ssm send-command \
           --instance-ids "$INSTANCE_ID" \
           --document-name "AWS-RunShellScript" \
-          --comment "Actualizar tienda-frontend desde ECR" \
+          --comment "Actualizar despacho-frontend desde ECR" \
           --parameters "commands=[
             'set -e',
             'export PATH=\$PATH:/usr/local/bin',
             'aws ecr get-login-password --region $REGION | sudo docker login --username AWS --password-stdin $ECR_REGISTRY',
             'sudo docker pull $ECR_REPO_URL:latest',
-            'sudo docker stop tienda-frontend || true',
-            'sudo docker rm tienda-frontend || true',
-            'sudo docker run -d --name tienda-frontend -p 80:80 $ECR_REPO_URL:latest'
+            'sudo docker stop despacho-frontend || true',
+            'sudo docker rm despacho-frontend || true',
+            'sudo docker run -d --name despacho-frontend -p 80:80 $ECR_REPO_URL:latest'
           ]" \
           --output text
