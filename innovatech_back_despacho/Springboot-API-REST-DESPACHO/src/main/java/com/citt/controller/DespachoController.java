@@ -46,7 +46,7 @@ public class DespachoController {
         Despacho despachoActualizado = despachoService.updateDespacho(idDespacho, despacho);
         return ResponseEntity.ok(despachoActualizado);
     }
-
+ 
     @Operation(summary = "Obtener todos los despachos")
     @GetMapping
     public ResponseEntity<List<Despacho>> getAllDespachos() {
