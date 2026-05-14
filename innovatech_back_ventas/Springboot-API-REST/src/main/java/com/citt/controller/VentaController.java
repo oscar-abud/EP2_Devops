@@ -23,6 +23,7 @@ public class VentaController {
     @Autowired
     private VentaService ventaService;
 
+
     @Operation(summary = "Crear una nueva venta", description = "Crea una nueva venta en el sistema")
     @PostMapping
     public ResponseEntity<Venta> crearVenta(@Valid @RequestBody Venta venta){
