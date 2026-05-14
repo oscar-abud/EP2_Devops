@@ -17,6 +17,7 @@
 name: CI/CD Despacho - Backend
 
 on:
+  workflow_dispatch:
   push:
     branches: [ "deploy" ]
     paths:
