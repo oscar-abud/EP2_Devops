@@ -43,6 +43,7 @@ public class VentaController {
         return ResponseEntity.ok(ventaActualizada);
     }
 
+
     @GetMapping
     @Operation(summary = "Obtener todas las ventas", description = "Devuelve una lista de todas las ventas")
     public ResponseEntity<List<Venta>> getVentas(){
