@@ -14,10 +14,10 @@ if [ "$VPC_ID" == "None" ] || [ -z "$VPC_ID" ]; then
   aws ec2 modify-vpc-attribute --vpc-id $VPC_ID --enable-dns-hostnames "{\"Value\":true}"
 fi
 
-SUBNET_ID=$(aws ec2 describe-subnets --filters "Name=tag:Name,Values=tienda-public-subnet" --query "Subnets[0].SubnetId" --output text)
+SUBNET_ID=$(aws ec2 describe-subnets --filters "Name=tag:Name,Values=innovatech-public-subnet" "Name=vpc-id,Values=$VPC_ID" --query "Subnets[0].SubnetId" --output text)
 if [ "$SUBNET_ID" == "None" ] || [ -z "$SUBNET_ID" ]; then
   SUBNET_ID=$(aws ec2 create-subnet --vpc-id $VPC_ID --cidr-block 10.0.1.0/24 --availability-zone ${REGION}a --query 'Subnet.SubnetId' --output text)
-  aws ec2 create-tags --resources $SUBNET_ID --tags Key=Name,Value=tienda-public-subnet
+  aws ec2 create-tags --resources $SUBNET_ID --tags Key=Name,Value=innovatech-public-subnet
   
   IGW_ID=$(aws ec2 create-internet-gateway --query 'InternetGateway.InternetGatewayId' --output text)
   aws ec2 attach-internet-gateway --vpc-id $VPC_ID --internet-gateway-id $IGW_ID
