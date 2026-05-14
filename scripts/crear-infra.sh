@@ -7,10 +7,10 @@ AMI_ID="ami-0c7217cdde317cfec"
 INSTANCE_TYPE="t3.micro"
 
 echo "=== 1. Validando o Creando VPC ==="
-VPC_ID=$(aws ec2 describe-vpcs --filters "Name=tag:Name,Values=tienda-perritos-vpc" --query "Vpcs[0].VpcId" --output text)
+VPC_ID=$(aws ec2 describe-vpcs --filters "Name=tag:Name,Values=innovatech-vpc" --query "Vpcs[0].VpcId" --output text)
 if [ "$VPC_ID" == "None" ] || [ -z "$VPC_ID" ]; then
   VPC_ID=$(aws ec2 create-vpc --cidr-block 10.0.0.0/16 --query 'Vpc.VpcId' --output text)
-  aws ec2 create-tags --resources $VPC_ID --tags Key=Name,Value=tienda-perritos-vpc
+  aws ec2 create-tags --resources $VPC_ID --tags Key=Name,Value=innovatech-vpc
   aws ec2 modify-vpc-attribute --vpc-id $VPC_ID --enable-dns-hostnames "{\"Value\":true}"
 fi
 
@@ -90,9 +90,49 @@ DESPACHO_FRONT_EC2=$(get_or_create_ec2 "despacho-frontend")
 DESPACHO_BACK_EC2=$(get_or_create_ec2 "despacho-back")
 VENTAS_BACK_EC2=$(get_or_create_ec2 "ventas-back")
 
+echo "=== 5. Creando EC2 de Base de Datos MySQL ==="
+DB_INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=innovatech-db" "Name=instance-state-name,Values=running,pending" --query "Reservations[0].Instances[0].InstanceId" --output text)
+if [ "$DB_INSTANCE_ID" == "None" ] || [ -z "$DB_INSTANCE_ID" ]; then
+  cat <<DBEOF > user_data_db.sh
+#!/bin/bash
+apt-get update -y
+apt-get install -y mysql-server
+systemctl start mysql
+systemctl enable mysql
+
+# Configurar MySQL para aceptar conexiones remotas
+sed -i 's/bind-address.*/bind-address = 0.0.0.0/' /etc/mysql/mysql.conf.d/mysqld.cnf
+systemctl restart mysql
+
+# Crear usuario y bases de datos
+mysql -e "CREATE DATABASE IF NOT EXISTS ventas CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -e "CREATE DATABASE IF NOT EXISTS despachos CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -e "CREATE USER IF NOT EXISTS 'innovatech'@'%' IDENTIFIED BY 'Innovatech2024!';"
+mysql -e "GRANT ALL PRIVILEGES ON ventas.* TO 'innovatech'@'%';"
+mysql -e "GRANT ALL PRIVILEGES ON despachos.* TO 'innovatech'@'%';"
+mysql -e "FLUSH PRIVILEGES;"
+DBEOF
+
+  DB_INSTANCE_ID=$(aws ec2 run-instances \
+    --image-id $AMI_ID \
+    --count 1 \
+    --instance-type $INSTANCE_TYPE \
+    --subnet-id $SUBNET_ID \
+    --security-group-ids $SG_ID \
+    --iam-instance-profile Name=LabInstanceProfile \
+    --associate-public-ip-address \
+    --user-data file://user_data_db.sh \
+    --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=innovatech-db}]" \
+    --query 'Instances[0].InstanceId' \
+    --output text)
+  rm -f user_data_db.sh
+fi
+
 rm -f user_data.sh
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
 ECR_REGISTRY="$AWS_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com"
+
+DB_PRIVATE_IP=$(aws ec2 describe-instances --instance-ids $DB_INSTANCE_ID --query "Reservations[0].Instances[0].PrivateIpAddress" --output text)
 
 echo "--------------------------------------------------------"
 echo " ¡INFRAESTRUCTURA CREADA CON ÉXITO!"
@@ -100,9 +140,18 @@ echo "--------------------------------------------------------"
 echo "EC2 despacho-frontend : $DESPACHO_FRONT_EC2"
 echo "EC2 despacho-back     : $DESPACHO_BACK_EC2"
 echo "EC2 ventas-back       : $VENTAS_BACK_EC2"
+echo "EC2 innovatech-db     : $DB_INSTANCE_ID"
 echo ""
 echo "ECR_REGISTRY          : $ECR_REGISTRY"
 echo "ECR despacho-frontend : $ECR_REGISTRY/despacho-frontend"
 echo "ECR despacho-back     : $ECR_REGISTRY/despacho-back"
 echo "ECR ventas-back       : $ECR_REGISTRY/ventas-back"
+echo ""
+echo "--- Secrets para GitHub ---"
+echo "DB_ENDPOINT  : $DB_PRIVATE_IP"
+echo "DB_PORT      : 3306"
+echo "DB_NAME_DESPACHOS : despachos"
+echo "DB_NAME_VENTAS    : ventas"
+echo "DB_USERNAME  : innovatech"
+echo "DB_PASSWORD  : Innovatech2024!"
 echo "--------------------------------------------------------"
