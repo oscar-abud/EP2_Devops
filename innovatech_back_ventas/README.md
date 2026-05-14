@@ -1,4 +1,4 @@
-# Innovatech — Backend Ventas - Funcionamiento en rama DEPLOY
+# Innovatech — Backend Ventas
 
 API REST del microservicio de **Ventas** de Innovatech Chile, construida con Spring Boot 3 y MySQL. Contenedorizada con Docker y desplegada automáticamente en AWS EC2 mediante GitHub Actions.
 
@@ -116,18 +116,6 @@ Para el **stack completo** (frontend + ambos backends + MySQL en contenedor), us
 | `DB_USERNAME` | Usuario RDS |
 | `DB_PASSWORD` | Password RDS |
 
-## Variables de entorno
-
-| Variable | Descripción | Ejemplo |
-|---|---|---|
-| `DB_ENDPOINT` | Host del MySQL (RDS endpoint o nombre de servicio en compose) | `xxx.rds.amazonaws.com` |
-| `DB_PORT` | Puerto MySQL | `3306` |
-| `DB_NAME` | Nombre de la base de datos | `ventas_db` |
-| `DB_USERNAME` | Usuario MySQL | `innovatech` |
-| `DB_PASSWORD` | Contraseña MySQL | `xxxxxx` |
-| `JAVA_OPTS` | Tuning de la JVM (opcional) | `-Xms256m -Xmx512m` |
-
-La JDBC URL del [`application.properties`](./Springboot-API-REST/src/main/resources/application.properties) incluye `createDatabaseIfNotExist=true`, por lo que Hibernate crea la base si no existe.
 ---
 
 ## Despliegue en AWS EC2
