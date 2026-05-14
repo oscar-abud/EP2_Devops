@@ -1,0 +1,28 @@
+# ============================================================
+# Compose de PRODUCCIÓN - EC2 back-Despachos (privada)
+# ------------------------------------------------------------
+# La BD MySQL vive en RDS (no aquí). Las credenciales y
+# endpoint se inyectan vía variables de entorno (archivo .env
+# en la EC2 o cargadas por el pipeline).
+# ============================================================
+
+services:
+  back-despachos:
+    image: ${DOCKERHUB_USERNAME}/innovatech-back-despachos:${IMAGE_TAG:-latest}
+    container_name: innovatech-back-despachos
+    restart: unless-stopped
+    environment:
+      DB_ENDPOINT: ${DB_ENDPOINT}     # endpoint del RDS
+      DB_PORT: ${DB_PORT:-3306}
+      DB_NAME: ${DB_NAME_DESPACHOS}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JAVA_OPTS: "-Xms256m -Xmx512m"
+    ports:
+      - "8081:8081"
+    networks:
+      - back-net
+
+networks:
+  back-net:
+    driver: bridge

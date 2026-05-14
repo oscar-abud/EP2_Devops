@@ -1,4 +1,4 @@
-# Innovatech — Backend Despachos - Funcionamiento en rama DEPLOY
+# Innovatech — Backend Despachos
 
 API REST del microservicio de **Despachos** de Innovatech Chile, construida con Spring Boot 3 y MySQL. Contenedorizada con Docker y desplegada automáticamente en AWS EC2 mediante GitHub Actions.
 
