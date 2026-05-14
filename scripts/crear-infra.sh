@@ -30,16 +30,17 @@ fi
 aws ec2 modify-subnet-attribute --subnet-id $SUBNET_ID --map-public-ip-on-launch "{\"Value\":true}"
 
 echo "=== 2. Validando o Creando Grupo de Seguridad ==="
-SG_ID=$(aws ec2 describe-security-groups --filters "Name=group-name,Values=tienda-sg" --query "SecurityGroups[0].GroupId" --output text)
+SG_ID=$(aws ec2 describe-security-groups --filters "Name=group-name,Values=tienda-sg" "Name=vpc-id,Values=$VPC_ID" --query "SecurityGroups[0].GroupId" --output text)
 if [ "$SG_ID" == "None" ] || [ -z "$SG_ID" ]; then
   SG_ID=$(aws ec2 create-security-group --group-name tienda-sg --description "Seguridad Tienda" --vpc-id $VPC_ID --query 'GroupId' --output text)
-  aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 80 --cidr 0.0.0.0/0
+  aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 22   --cidr 0.0.0.0/0
+  aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 80   --cidr 0.0.0.0/0
   aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 3001 --cidr 0.0.0.0/0
   aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 3306 --cidr 10.0.0.0/16
 fi
 
 echo "=== 3. Validando o Creando Repositorios ECR ==="
-for repo in tienda-frontend tienda-backend tienda-db; do
+for repo in despacho-frontend despacho-back ventas-back; do
   aws ecr describe-repositories --repository-names $repo >/dev/null 2>&1 || aws ecr create-repository --repository-name $repo
 done
 
@@ -85,19 +86,23 @@ get_or_create_ec2() {
   echo "$id"
 }
 
-FRONTEND_EC2=$(get_or_create_ec2 "tienda-frontend")
-BACKEND_EC2=$(get_or_create_ec2 "tienda-backend")
-DB_EC2=$(get_or_create_ec2 "tienda-db")
+DESPACHO_FRONT_EC2=$(get_or_create_ec2 "despacho-frontend")
+DESPACHO_BACK_EC2=$(get_or_create_ec2 "despacho-back")
+VENTAS_BACK_EC2=$(get_or_create_ec2 "ventas-back")
 
 rm -f user_data.sh
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
+ECR_REGISTRY="$AWS_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com"
 
 echo "--------------------------------------------------------"
 echo " ¡INFRAESTRUCTURA CREADA CON ÉXITO!"
 echo "--------------------------------------------------------"
-echo "EC2_FRONTEND_INSTANCE_ID : $FRONTEND_EC2"
-echo "EC2_BACKEND_INSTANCE_ID  : $BACKEND_EC2"
-echo "EC2_DB_INSTANCE_ID       : $DB_EC2"
-echo "ECR_REGISTRY             : $AWS_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com"
-echo "ECR_REPO_URL_FRONTEND    : $AWS_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/tienda-frontend"
+echo "EC2 despacho-frontend : $DESPACHO_FRONT_EC2"
+echo "EC2 despacho-back     : $DESPACHO_BACK_EC2"
+echo "EC2 ventas-back       : $VENTAS_BACK_EC2"
+echo ""
+echo "ECR_REGISTRY          : $ECR_REGISTRY"
+echo "ECR despacho-frontend : $ECR_REGISTRY/despacho-frontend"
+echo "ECR despacho-back     : $ECR_REGISTRY/despacho-back"
+echo "ECR ventas-back       : $ECR_REGISTRY/ventas-back"
 echo "--------------------------------------------------------"
