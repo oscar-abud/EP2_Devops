@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { CrudAdmin } from "../componentes/CrudAdmin.jsx";
+import { CrudAdmin } from "../components/CrudAdmin.jsx";
 
 const AppRoutes = () => {
   return (
