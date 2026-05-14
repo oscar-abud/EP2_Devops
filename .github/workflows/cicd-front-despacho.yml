@@ -18,7 +18,7 @@ on:
   push:
     branches: [ "deploy" ]
     paths:
-      - "frontend/**"
+      - "innovatech_front_despacho/**"
 
 jobs:
   build-push-deploy-frontend:
@@ -58,7 +58,7 @@ jobs:
 
     - name: Build imagen Frontend y push a ECR
       run: |
-        cd frontend
+        cd innovatech_front_despacho
         docker build -t despacho-frontend .
         docker tag despacho-frontend:latest ${{ steps.aws-ids.outputs.ecr_repo_url }}:latest
         docker push ${{ steps.aws-ids.outputs.ecr_repo_url }}:latest

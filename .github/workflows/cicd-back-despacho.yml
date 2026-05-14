@@ -20,7 +20,7 @@ on:
   push:
     branches: [ "deploy" ]
     paths:
-      - "Springboot-API-REST-DESPACHO/**"
+      - "innovatech_back_despacho/**"
 
 jobs:
   build-push-deploy-back-despacho:
@@ -60,7 +60,7 @@ jobs:
 
     - name: Build imagen Backend y push a ECR
       run: |
-        cd Springboot-API-REST-DESPACHO
+        cd innovatech_back_despacho/Springboot-API-REST-DESPACHO
         docker build -t despacho-back .
         docker tag despacho-back:latest ${{ steps.aws-ids.outputs.ecr_repo_url }}:latest
         docker push ${{ steps.aws-ids.outputs.ecr_repo_url }}:latest
