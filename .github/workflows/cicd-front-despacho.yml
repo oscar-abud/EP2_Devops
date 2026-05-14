@@ -9,7 +9,8 @@
 #   4) Login y push de imagen Docker a ECR
 #   5) Deploy en EC2 vía SSM (pull + restart del contenedor)
 # Secrets requeridos: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY,
-#                     AWS_SESSION_TOKEN, AWS_REGION
+#                     AWS_SESSION_TOKEN, AWS_REGION,
+#                     VITE_API_DESPACHO_URL, VITE_API_VENTAS_URL
 # ============================================================
 
 name: CI/CD Despacho - Frontend
@@ -59,7 +60,10 @@ jobs:
     - name: Build imagen Frontend y push a ECR
       run: |
         cd innovatech_front_despacho
-        docker build -t despacho-frontend .
+        docker build \
+          --build-arg VITE_API_DESPACHO_URL=${{ secrets.VITE_API_DESPACHO_URL }} \
+          --build-arg VITE_API_VENTAS_URL=${{ secrets.VITE_API_VENTAS_URL }} \
+          -t despacho-frontend .
         docker tag despacho-frontend:latest ${{ steps.aws-ids.outputs.ecr_repo_url }}:latest
         docker push ${{ steps.aws-ids.outputs.ecr_repo_url }}:latest
 

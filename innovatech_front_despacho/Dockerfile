@@ -9,6 +9,12 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 
+# Variables de entorno inyectadas en build time por el CI/CD
+ARG VITE_API_DESPACHO_URL
+ARG VITE_API_VENTAS_URL
+ENV VITE_API_DESPACHO_URL=$VITE_API_DESPACHO_URL
+ENV VITE_API_VENTAS_URL=$VITE_API_VENTAS_URL
+
 # Copiamos el resto del código y construimos la SPA (genera /app/dist)
 COPY . .
 RUN npm run build
