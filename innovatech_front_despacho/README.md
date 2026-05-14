@@ -1,4 +1,4 @@
-# Innovatech — Frontend Despacho - Funcionamiento en rama DEPLOY
+# Innovatech — Frontend Despacho
 
 Aplicación web (SPA) de la marca Despacho de **Innovatech Chile**, construida con React + Vite y servida en producción por Nginx dentro de un contenedor Docker.
 
